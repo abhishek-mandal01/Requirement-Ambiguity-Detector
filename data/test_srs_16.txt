@@ -1,0 +1,29 @@
+Software Requirements Specification - Online Library System
+
+1. User Authentication
+REQ-001: The system should lock the account after 5 consecutive unsuccessful login attempts.
+REQ-002: The user ko apna password reset karna chahiye.
+REQ-003: Users must recieve a confirmation email after registration.
+
+2. Book Search
+REQ-004: The system should respond quickly.
+REQ-005: The system shall display the requested page within 2 seconds.
+REQ-006: The search feature should work efficiently.
+
+3. User Interface
+REQ-007: The system should provide a user-friendly interface.
+REQ-008: The UI should be easy to navigate.
+REQ-009: The system should provide a reasonable response time.
+
+4. Performance
+REQ-010: The system should be fast.
+REQ-011: The application shall support 100 concurrent users.
+REQ-012: Response times shall remain adequate under normal load and users shall recieve status updates.
+
+5. Data Management
+REQ-013: Book records must be stored in the database.
+REQ-014: The system shall allow librarians to update inventory.
+
+6. Notifications
+REQ-015: The   system   should   provide   an   appropriate   UI   for   overdue   notices.
+REQ-016: Borrowers shall recieve reminders before due dates.

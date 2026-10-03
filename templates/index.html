@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requirement Ambiguity Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        .text-ellipsis {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    
+    <nav class="floating-rail">
+        <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h6m-5 0v5.2L5.5 18a2 2 0 001.7 3h9.6a2 2 0 001.7-3L14 8.2V3m-6 10h8"></path>
+        </svg>
+        
+        <a href="#input" class="nav-link active" title="Input SRS">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </a>
+        <a href="#dashboard" class="nav-link" title="Analysis Dashboard">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        </a>
+        <a href="#evaluation" class="nav-link" title="Evaluation">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+        </a>
+    </nav>
+
+    <main class="main-content">
+        
+        <header class="top-header">
+            <div>
+                <h1>Requirement Intelligence</h1>
+                <p>Detecting ambiguity via linguistic data mining and classification.</p>
+            </div>
+        </header>
+
+        <!-- Step 1: SRS Input -->
+        <section id="input" class="dashboard-section hero-section">
+            <div class="hero-left soft-card" style="grid-column: span 2;">
+                <h2 class="section-title" style="font-size: 2rem;">Upload / Paste SRS</h2>
+                <p style="color: var(--text-secondary); margin-top: -10px; margin-bottom: 24px;">Paste your complete Software Requirements Specification or upload a document. Each line will be parsed as a distinct requirement.</p>
+                <div style="margin-bottom: 16px;">
+                    <input type="file" id="srs-file" class="file-input" accept=".txt,.pdf,.docx">
+                </div>
+                <div style="text-align: center; color: var(--text-muted); margin-bottom: 16px; font-weight: 500;">OR</div>
+                <textarea id="srs-input" class="input-warm" rows="8" placeholder="E.g.,&#10;The system shall process user payments securely.&#10;Users must be able to reset their passwords easily.&#10;The system should be fast."></textarea>
+                <div>
+                    <button id="analyze-srs-btn" class="btn-primary" style="font-size: 1.1rem; padding: 20px 40px;">Analyze Requirements</button>
+                    <span id="loading-indicator" class="loading-indicator" role="status" aria-live="polite" aria-hidden="true">
+                        <span class="loading-ring" aria-hidden="true"><span id="loading-progress"></span></span>
+                        <span id="loading-message">Preparing analysis...</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+        
+        <div id="results-container" style="display: none;">
+            
+            <!-- Step 2: Dashboard Overview -->
+            <section id="dashboard" class="dashboard-section">
+                
+                <h2 class="section-title">SRS Summary</h2>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <span class="kpi-label">Total Requirements</span>
+                        <span class="kpi-value kpi-accent-1" id="sum-total">-</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-label">Exact Duplicates</span>
+                        <span class="kpi-value kpi-accent-2" id="sum-exact">-</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-label">Near Duplicates</span>
+                        <span class="kpi-value kpi-accent-4" id="sum-near">-</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-label">Potentially Ambiguous</span>
+                        <span class="kpi-value kpi-accent-3" id="sum-ambig">-</span>
+                    </div>
+                </div>
+                
+                <!-- Requirements Table -->
+                <div class="soft-card" style="margin-bottom: 40px;">
+                    <h3 class="section-title">Extracted Requirements</h3>
+                    <div class="table-container">
+                        <table id="req-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Requirement</th>
+                                    <th>Cleaned Text</th>
+                                    <th>Duplicate Status</th>
+                                    <th>Ambiguity Indicators</th>
+                                    <th>Classification</th>
+                                    <th>Features (WC/VW/PV)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Similarity Table -->
+                <div class="soft-card" style="margin-bottom: 40px;">
+                    <h3 class="section-title">Duplicate / Near-Duplicate Analysis</h3>
+                    <p style="color: var(--text-secondary); margin-top: -10px;">TF-IDF + Cosine Similarity matching (Threshold >= 0.75)</p>
+                    <div class="table-container">
+                        <table id="sim-table">
+                            <thead>
+                                <tr>
+                                    <th>Req A</th>
+                                    <th>Req B</th>
+                                    <th>Similarity Score</th>
+                                    <th>Classification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                        <p id="no-sim-msg" style="display: none; padding: 20px; text-align: center; color: var(--text-secondary);">No near-duplicates detected.</p>
+                    </div>
+                </div>
+
+                <!-- Preprocessing Pipeline Example -->
+                <div class="soft-card" style="margin-bottom: 40px;">
+                    <h3 class="section-title">Preprocessing Pipeline Demo (Sample)</h3>
+                    <p style="color: var(--text-secondary); margin-top: -10px;">Showing automatic data cleaning for a selected requirement.</p>
+                    
+                    <div class="pipeline-layout" style="margin-top: 32px;">
+                        <div class="pipeline-node">
+                            <h4 style="color: var(--text-secondary); margin: 0 0 16px 0;">1. BEFORE</h4>
+                            <p id="pl-original" style="font-family: monospace; color: var(--text-muted);"></p>
+                        </div>
+                        
+                        <div class="pipeline-arrow">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </div>
+                        
+                        <div class="pipeline-node" style="background: #ffffff; box-shadow: var(--shadow-md);">
+                            <h4 style="color: var(--accent); margin: 0 0 16px 0;">2. OPERATIONS</h4>
+                            <ul id="pl-steps" style="padding-left: 20px; line-height: 1.6; color: var(--text-primary); font-size: 0.95rem;"></ul>
+                        </div>
+                        
+                        <div class="pipeline-arrow">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </div>
+                        
+                        <div class="pipeline-node">
+                            <h4 style="color: var(--text-secondary); margin: 0 0 16px 0;">3. AFTER</h4>
+                            <p id="pl-final" style="font-weight: 600; color: var(--accent-blue); font-size: 1.1rem;"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Model Evaluation -->
+        <section id="evaluation" class="dashboard-section soft-card" style="margin-bottom: 80px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <div>
+                    <h2 class="section-title" style="margin: 0;">Performance Benchmarks</h2>
+                    <p style="color: var(--text-secondary); margin: 8px 0 0 0; font-size: 0.9rem;">Evaluation using PROMISE and PURE datasets.</p>
+                </div>
+                <button id="eval-btn" class="btn-secondary">Run Model Validation</button>
+            </div>
+            
+            <p id="eval-methodology-note" style="display: none; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin: -16px 0 24px 0; white-space: pre-wrap;"></p>
+            <div id="eval-results" style="display: none;" class="eval-grid">
+                <div>
+                    <h4 style="color: var(--text-secondary); margin: 0 0 24px 0; font-size: 0.9rem; text-transform: uppercase;">Classifier Metrics</h4>
+                    
+                    <div class="metric-bar-group">
+                        <div class="metric-bar-label">
+                            <span>Accuracy</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Raw: <span id="met-acc-a"></span> | Preprocessed: <strong id="met-acc-b" style="color: var(--accent);"></strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-bar-group">
+                        <div class="metric-bar-label">
+                            <span>Precision</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Raw: <span id="met-pre-a"></span> | Preprocessed: <strong id="met-pre-b" style="color: var(--accent);"></strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-bar-group">
+                        <div class="metric-bar-label">
+                            <span>Recall</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Raw: <span id="met-rec-a"></span> | Preprocessed: <strong id="met-rec-b" style="color: var(--accent);"></strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-bar-group">
+                        <div class="metric-bar-label">
+                            <span>F1-Score</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Raw: <span id="met-f1-a"></span> | Preprocessed: <strong id="met-f1-b" style="color: var(--accent);"></strong></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="chart-wrapper">
+                        <img id="bar-chart-img" />
+                    </div>
+                    <div class="chart-wrapper">
+                        <img id="cm-chart-img" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
