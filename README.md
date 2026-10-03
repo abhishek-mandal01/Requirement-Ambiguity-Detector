@@ -40,8 +40,4 @@ Open `http://127.0.0.1:5000/`.
 - **Mixed-language Heuristic**: Flags Hinglish / non-English content instead of treating it as Clear.
 - **Model Evaluation**: Mode A (raw TF-IDF) vs Mode B (preprocessed TF-IDF) with Accuracy, Precision, Recall, F1, and methodology notes. Labels are rule-based; scores are not claimed as general ML performance.
 
-## Quick Test
-
-Paste the contents of `data/test_srs_16.txt` into the SRS input and click **Analyze Requirements**. You should see 16 requirements, REQ-012 as the spelling-correction demo (`recieve` → `receive`), and ambiguous/clear/mixed labels consistent with the methodology above.
-
 For more academic detail, see [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md).
