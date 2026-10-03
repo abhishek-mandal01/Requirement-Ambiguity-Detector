@@ -487,6 +487,23 @@ body {
     border-radius: var(--radius-sm);
 }
 
+.table-container {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+#req-table {
+    width: 100%;
+}
+
+#req-table td:nth-child(6) .status-pill {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    white-space: nowrap;
+    text-align: left;
+}
+
 /* TF-IDF Layout */
 .tfidf-layout {
     display: grid;
